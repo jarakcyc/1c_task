@@ -1,3 +1,3 @@
-'''c++
+'''cpp
 #include <bits/stdc++.h>
 '''
