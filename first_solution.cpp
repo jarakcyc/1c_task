@@ -129,6 +129,8 @@ void SolutionWithSimpleTrie() {
         }
       }
 
+      current_word += addition;
+
       state = trie.Go(state, addition);
       if (state.index == -1) {
         std::cout << "no word with same prefix" << std::endl;
