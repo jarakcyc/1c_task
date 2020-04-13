@@ -1,1 +1,3 @@
-$\xi$
+'''c++
+#include <bits/stdc++.h>
+'''
