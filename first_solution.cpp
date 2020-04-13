@@ -93,6 +93,9 @@ void SolutionWithSimpleTrie() {
 
   Trie::TrieState state;
 
+  std::string current_word = "";
+  std::string tip = "";
+
   char query_type;
   while (std::cin >> query_type) {
     if (query_type == '!') {
@@ -106,20 +109,34 @@ void SolutionWithSimpleTrie() {
     } else if (query_type == '?') {
       std::string word;
       std::cin >> word;
+      current_word = word;
       state = trie.Go(Trie::TrieState(), word);
       if (state.index == -1) {
         std::cout << "no word with same prefix" << std::endl;
       } else {
-        std::cout << trie.FindBest(state) << std::endl;
+        tip = trie.FindBest(state);
+        std::cout << tip << std::endl;
       }
     } else if (query_type == '+') {
       std::string addition;
       std::cin >> addition;
+
+      bool prev_tip_ok = true;
+      for (int i = 0; i < addition.size(); ++i) {
+        if (current_word.size() + i >= tip.size() || tip[current_word.size() + i] != addition[i]) {
+          prev_tip_ok = false;
+          break;
+        }
+      }
+
       state = trie.Go(state, addition);
       if (state.index == -1) {
         std::cout << "no word with same prefix" << std::endl;
       } else {
-        std::cout << trie.FindBest(state) << std::endl;
+        if (!prev_tip_ok) {
+          tip = trie.FindBest(state);
+        }
+        std::cout << tip << std::endl;
       }
     } else {
       std::cerr << "unknown type" << std::endl;
