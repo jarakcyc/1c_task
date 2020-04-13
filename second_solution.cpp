@@ -5,9 +5,9 @@
 
 typedef size_t NodeIndex;
 
-class Trie {
+class RecursiveTrie {
 public:
-  Trie() : nodes_(1, Node()) {};
+  RecursiveTrie() : nodes_(1, Node()) {};
 
   struct TrieState {
     NodeIndex index;
@@ -24,20 +24,33 @@ public:
     }
   };
 
-  void Add(const std::string& word) {
-    size_t v = 0;
-    for (char c : word) {
-      if (nodes_[v].link.count(c) == 0) {
-        nodes_[v].link[c] = nodes_.size();
-        nodes_.push_back(Node());
+  void Add(const std::string& word, int symbol_id, NodeIndex node_index = 0) {
+    if (symbol_id == word.size()) {
+      nodes_[node_index].counter++;
+      if (nodes_[node_index].best.second < nodes_[node_index].counter) {
+        nodes_[node_index].best = {"", nodes_[node_index].counter};
       }
-      v = nodes_[v].link[c];
+      return;
     }
-    nodes_[v].counter++;
+
+    char next_symbol = word[symbol_id];
+    if (nodes_[node_index].link.count(next_symbol) == 0) {
+      nodes_[node_index].link[next_symbol] = nodes_.size();
+      nodes_.push_back(Node());
+    }
+
+    NodeIndex next_node = nodes_[node_index].link[next_symbol];
+    Add(word, symbol_id + 1, next_node);
+    if (nodes_[next_node].best.second > nodes_[node_index].best.second) {
+      std::string new_best = "";
+      new_best += next_symbol;
+      new_best += nodes_[next_node].best.first;
+      nodes_[node_index].best = {new_best, nodes_[next_node].best.second};
+    }
   }
 
-  TrieState Go(TrieState start_state, std::string next) {
-    size_t v = start_state.index;
+  TrieState Go(TrieState start_state, const std::string& next) {
+    NodeIndex v = start_state.index;
     if (v == -1) {
       return start_state;
     }
@@ -54,44 +67,27 @@ public:
   }
 
   std::string FindBest(TrieState start_state) {
-    std::pair<std::string, int> best_result = Dfs(start_state);
-    return best_result.first;
+    return start_state.word + nodes_[start_state.index].best.first;
   }
 
 private:
   struct Node {
     std::unordered_map<char, int> link;
     int counter;
+    std::pair<std::string, int> best;
     Node() :
-      counter(0) {
+      counter(0),
+      best({"", 0}) {
     };
   };
 
   std::vector<Node> nodes_;
-
-  std::pair<std::string, int> Dfs(TrieState state) {
-    std::pair<std::string, int> res = {"", 0};
-    if (nodes_[state.index].counter > 0) {
-      res = {state.word, nodes_[state.index].counter};
-    }
-
-    for (auto p : nodes_[state.index].link) {
-      std::string new_word = state.word;
-      new_word += p.first;
-      std::pair<std::string, int> candidate = Dfs(TrieState(p.second, new_word));
-      if (candidate.second > res.second) {
-        res = candidate;
-      }
-    }
-
-    return res;
-  }
 };
 
-void SolutionWithSimpleTrie() {
-  Trie trie;
+void SolutionWithRecursiveTrie() {
+  RecursiveTrie trie;
 
-  Trie::TrieState state;
+  RecursiveTrie::TrieState state;
 
   char query_type;
   while (std::cin >> query_type) {
@@ -101,12 +97,12 @@ void SolutionWithSimpleTrie() {
       for (int i = 0; i < n; ++i) {
         std::string word;
         std::cin >> word;
-        trie.Add(word);
+        trie.Add(word, 0);
       }
     } else if (query_type == '?') {
       std::string word;
       std::cin >> word;
-      state = trie.Go(Trie::TrieState(), word);
+      state = trie.Go(RecursiveTrie::TrieState(), word);
       if (state.index == -1) {
         std::cout << "no word with same prefix" << std::endl;
       } else {
@@ -122,7 +118,7 @@ void SolutionWithSimpleTrie() {
         std::cout << trie.FindBest(state) << std::endl;
       }
     } else {
-      std::cerr << "unknown type" << std::endl;
+      std::cout << "unknown type" << std::endl;
     }
   }
 }
@@ -133,7 +129,7 @@ int main() {
   freopen("output.txt", "wt", stdout);
 #endif // LOCAL
 
-  SolutionWithSimpleTrie();
+  SolutionWithRecursiveTrie();
 
   return 0;
 }
